@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #define INTEL_BRIGHT_P "/sys/class/backlight/intel_backlight/brightness"
 #define INTEL_ACTUAL_BRIGHT_P "/sys/class/backlight/intel_backlight/actual_brightness"
@@ -11,9 +12,14 @@
 #define ERROR -1
 
 // return a number from the file in string to integer
-int getIntFile(FILE *f) {
-    if (f == NULL)
-        return ERROR;
+int getIntFile(char *fpath) {
+
+    FILE *f = fopen(fpath, "r");
+
+    if (f == NULL) {
+        fprintf(stderr, "Could not open %s: %s", fpath, strerror(errno));
+        exit(errno);
+    }
 
     char c, buffer[BUFFER_SIZE];
 
@@ -30,6 +36,8 @@ int getIntFile(FILE *f) {
 
     buffer[i] = '\0';
 
+    fclose(f);
+
     return atoi(buffer);
     
 }
@@ -38,29 +46,25 @@ int main(int argc, char *argv[]) {
 
     if (argc < 2) return 1;
 
-    FILE *bright_file = fopen(INTEL_BRIGHT_P, "w"),
-         *actual_file = fopen(INTEL_ACTUAL_BRIGHT_P, "r"),
-         *max_b_file = fopen(INTEL_MAX_BRIGHT_P, "r");
-
-    if (actual_file == NULL || bright_file == NULL)
-        return 1;
+    FILE *bright_file = fopen(INTEL_BRIGHT_P, "w");
+    if (bright_file == NULL) {
+        fprintf(stderr, "Could not open %s: %s", INTEL_BRIGHT_P, strerror(errno));
+        return errno;
+    }
 
     int inc = atoi(argv[1]),
-        actual = getIntFile(actual_file),
-        mx = getIntFile(max_b_file),
-        new_bright = actual+inc<=mx ? actual+inc : mx;
+        actual = getIntFile(INTEL_ACTUAL_BRIGHT_P),
+        mx = getIntFile(INTEL_MAX_BRIGHT_P),
+        new_bright = actual+inc;
+        
+    if (new_bright < 0) new_bright = 0;
+    if (new_bright > mx) new_bright = mx;
 
     printf("%d\n", new_bright);
 
-    if (actual == ERROR || mx == ERROR)
-        return 1;
-
     fprintf(bright_file, "%d", new_bright);
     
-
     fclose(bright_file);
-    fclose(actual_file);
-    fclose(max_b_file);
 
     return 0;
     
