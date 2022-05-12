@@ -32,7 +32,7 @@ int getIntFile(char *fpath) {
     do {
         buffer[i++] = c;
 
-    } while ((c=fgetc(f))>= '0' && c<='9');
+    } while (i < BUFFER_SIZE && (c=fgetc(f))>= '0' && c<='9');
 
     buffer[i] = '\0';
 
