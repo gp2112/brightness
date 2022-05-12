@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     int inc = atoi(argv[1]),
         actual = getIntFile(INTEL_ACTUAL_BRIGHT_P),
         mx = getIntFile(INTEL_MAX_BRIGHT_P),
-        new_bright = actual+inc;
+        new_bright = (int)(actual + mx*inc/100);
         
     if (new_bright < 0) new_bright = 0;
     if (new_bright > mx) new_bright = mx;
